@@ -2,41 +2,73 @@ package main
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
 func TestBuildEdgeArgs_BasicLaunch(t *testing.T) {
 	args := buildEdgeArgs(`C:\tenants\mueller`, `https://portal.azure.com`)
-	want := []string{
+	// Static prefix: user-data-dir, --no-first-run, --no-default-browser-check.
+	wantPrefix := []string{
 		`--user-data-dir=C:\tenants\mueller`,
 		`--no-first-run`,
 		`--no-default-browser-check`,
-		`--disable-features=msSingleSignOn,msAccountManager,AzureADSSOForChromium`,
-		`https://portal.azure.com`,
 	}
-	if len(args) != len(want) {
-		t.Fatalf("len got %d, want %d (%v)", len(args), len(want), args)
-	}
-	for i := range args {
-		if args[i] != want[i] {
-			t.Errorf("args[%d] = %q, want %q", i, args[i], want[i])
+	for i, w := range wantPrefix {
+		if args[i] != w {
+			t.Errorf("args[%d] = %q, want %q", i, args[i], w)
 		}
+	}
+	// URL is the last argument.
+	if args[len(args)-1] != `https://portal.azure.com` {
+		t.Errorf("last arg = %q, want URL", args[len(args)-1])
 	}
 }
 
-func TestBuildEdgeArgs_DisablesWindowsBrokerSSO(t *testing.T) {
-	// Regression: Phase 1 smoke test caught Edge silently using the Windows
-	// user's PRT via WAM on AAD-joined devices, breaking tenant isolation.
+func TestBuildEdgeArgs_DisablesAllSSOFeatures(t *testing.T) {
+	// Phase 1 smoke test caught Edge for Business cloud policy ForceSync=true
+	// silently re-signing the user in via WAM/PRT despite our user-data-dir
+	// isolation. We layer multiple feature-disable flags to maximize coverage
+	// across Edge versions and Edge for Business policy interactions.
 	args := buildEdgeArgs(`C:\tenants\mueller`, ``)
-	found := false
+
+	requiredFeatures := []string{
+		"AccountConsistency",
+		"AzureADSSOForChromium",
+		"BrowserSignin",
+		"EdgeAutoSignIn",
+		"EdgeImplicitSignin",
+		"EnableImplicitSignin",
+		"msAccountManager",
+		"msSingleSignOn",
+		"WebAccountManagerToWindowsCloudAP",
+	}
+	var disableFlag string
 	for _, a := range args {
-		if a == `--disable-features=msSingleSignOn,msAccountManager,AzureADSSOForChromium` {
-			found = true
+		if strings.HasPrefix(a, "--disable-features=") {
+			disableFlag = a
 			break
 		}
 	}
-	if !found {
-		t.Errorf("expected SSO-disable flag in args, got %v", args)
+	if disableFlag == "" {
+		t.Fatal("no --disable-features flag in args")
+	}
+	for _, feat := range requiredFeatures {
+		if !strings.Contains(disableFlag, feat) {
+			t.Errorf("--disable-features missing %q (got %q)", feat, disableFlag)
+		}
+	}
+	// Also need to disable component extensions (Edge bundles its AAD SSO
+	// extension as a built-in component extension, not a regular one).
+	foundCompExt := false
+	for _, a := range args {
+		if a == "--disable-component-extensions-with-background-pages" {
+			foundCompExt = true
+			break
+		}
+	}
+	if !foundCompExt {
+		t.Error("missing --disable-component-extensions-with-background-pages")
 	}
 }
 

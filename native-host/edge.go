@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 var errEdgeNotFound = errors.New("msedge.exe not found in standard install locations")
@@ -44,26 +45,46 @@ func discoverEdge(candidates []string, exists func(string) bool) (string, error)
 
 // buildEdgeArgs constructs the argv (without the executable itself).
 //
-// On Azure-AD-joined Windows machines, Edge integrates with the OS Web
-// Account Manager (WAM) broker and silently signs the user in via their
-// Primary Refresh Token (PRT) — even with a fresh --user-data-dir. That
-// breaks tenant isolation: opening a Microsoft URL auto-signs you in as
-// the Windows user, regardless of which tenant profile you launched.
+// On Azure-AD-joined Windows machines (especially Edge for Business with
+// cloud-managed policies like ForceSync=true), Edge integrates with the OS
+// Web Account Manager broker and silently signs the user in via their
+// Primary Refresh Token — even with a fresh --user-data-dir. That breaks
+// tenant isolation: opening a Microsoft URL auto-signs you in as the
+// Windows user, regardless of which tenant profile you launched.
 //
-// We disable that broker integration so each isolated profile starts truly
-// signed out. Users sign in once per tenant with the right account, and the
-// profile then persists that login across launches like a normal browser.
+// We layer multiple disable flags to break the broker integration and the
+// Chromium-level browser sign-in feature. On non-managed devices this is
+// fully effective. On Edge for Business with mandatory cloud policies,
+// browser flags can be overridden by tenant policies; in that case the
+// recommended workaround is a separate local Windows user or a different
+// browser fork — see docs/SMOKE-TEST.md.
 func buildEdgeArgs(userDataDir, url string) []string {
 	args := []string{
 		"--user-data-dir=" + userDataDir,
 		"--no-first-run",
 		"--no-default-browser-check",
-		"--disable-features=msSingleSignOn,msAccountManager,AzureADSSOForChromium",
+		"--disable-features=" + strings.Join(disabledFeatures, ","),
+		"--disable-component-extensions-with-background-pages",
 	}
 	if url != "" {
 		args = append(args, url)
 	}
 	return args
+}
+
+// disabledFeatures is the kitchen-sink list of Chromium/Edge feature flags
+// that participate in implicit sign-in. Order doesn't matter; duplicates
+// are harmless. Keep this list ordered alphabetically for review sanity.
+var disabledFeatures = []string{
+	"AccountConsistency",
+	"AzureADSSOForChromium",
+	"BrowserSignin",
+	"EdgeAutoSignIn",
+	"EdgeImplicitSignin",
+	"EnableImplicitSignin",
+	"msAccountManager",
+	"msSingleSignOn",
+	"WebAccountManagerToWindowsCloudAP",
 }
 
 // launchEdge starts msedge.exe detached and returns immediately.
