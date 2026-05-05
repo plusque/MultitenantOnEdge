@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Edge Tenant Switcher — Setup</title>
+    <link rel="stylesheet" href="welcome.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Willkommen beim Tenant Switcher</h1>
+      <p class="lead">
+        Vier Schritte, dann öffnest du Microsoft-Tenants per Klick — jeder mit eigener,
+        sauber isolierter Edge-Session.
+      </p>
+
+      <ol class="wizard">
+        <li>
+          <h2>1. Native Helper installieren</h2>
+          <p>
+            Diese Extension allein kann keine zweite Edge-Instanz mit eigenem Profil starten —
+            das ist eine Sicherheits-Beschränkung von Chromium. Dafür gibt es ein winziges
+            Helper-Programm namens <code>tenant-helper.exe</code> (Open Source, ca. 5 MB).
+          </p>
+          <ol>
+            <li>
+              <a href="https://github.com/pluess/edge-tenant-switcher/releases" target="_blank" rel="noopener">
+                Helper-ZIP herunterladen ↗
+              </a>
+            </li>
+            <li>ZIP entpacken</li>
+            <li>
+              In PowerShell:
+              <pre><code>cd path\to\unpacked\
+.\install.ps1 -ExtensionId &lt;diese Extension-ID&gt;</code></pre>
+            </li>
+            <li>
+              Deine Extension-ID:
+              <code id="extension-id-display">(wird gleich angezeigt)</code>
+              <button id="copy-extension-id" type="button">Kopieren</button>
+            </li>
+          </ol>
+        </li>
+
+        <li>
+          <h2>2. Verbindung prüfen</h2>
+          <p>
+            Sobald der Helper installiert ist und die Extension neu geladen wurde, klicke hier:
+          </p>
+          <button id="check-connection" type="button" class="primary">Verbindung prüfen</button>
+          <p id="connection-status" class="status" hidden></p>
+        </li>
+
+        <li>
+          <h2>3. Speicherort festlegen</h2>
+          <p>Wo sollen die isolierten Tenant-Profile liegen?</p>
+          <input type="text" id="storage-base-path" />
+          <button id="save-storage-path" type="button">Speichern</button>
+          <p id="storage-status" class="status" hidden></p>
+        </li>
+
+        <li>
+          <h2>4. Ersten Tenant anlegen</h2>
+          <p>Optional jetzt schon, oder später über die Einstellungen.</p>
+          <button id="open-options" type="button" class="primary">Einstellungen öffnen →</button>
+        </li>
+      </ol>
+    </main>
+
+    <script type="module" src="welcome.ts"></script>
+  </body>
+</html>
