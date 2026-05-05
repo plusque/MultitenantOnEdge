@@ -114,6 +114,9 @@ native-host/*.out
 
 # OS
 Thumbs.db
+
+# Git worktrees
+.worktrees/
 ```
 
 - [ ] **Step 2: Create `README.md`**
