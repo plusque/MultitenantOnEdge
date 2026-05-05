@@ -2,8 +2,26 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"regexp"
 	"strings"
 )
+
+// envVarPattern matches Windows-style %ENV_VAR% references.
+var envVarPattern = regexp.MustCompile(`%([A-Za-z_][A-Za-z0-9_]*)%`)
+
+// expandEnvVars replaces %VAR% references with their values from the
+// process environment. Unknown vars are left as-is so validation surfaces
+// them rather than silently producing a relative path.
+func expandEnvVars(p string) string {
+	return envVarPattern.ReplaceAllStringFunc(p, func(match string) string {
+		name := match[1 : len(match)-1]
+		if val := os.Getenv(name); val != "" {
+			return val
+		}
+		return match
+	})
+}
 
 // normalizePath canonicalizes a path: forward-slashes → backslashes on Windows-style paths,
 // resolves "." and ".." components, returns absolute lexical form.

@@ -54,17 +54,23 @@ func handle(
 		return okResponse(map[string]any{"pong": true, "version": "0.1.0"})
 
 	case "launch":
-		if err := validateUserDataDir(req.UserDataDir, req.StorageBasePath); err != nil {
+		// Expand %VAR% in both paths so users can keep the default
+		// "%LOCALAPPDATA%\TenantSwitcher\profiles" without having to spell
+		// out the absolute path. Expansion happens before validation so
+		// the absolute-path check sees fully resolved input.
+		userDataDir := expandEnvVars(req.UserDataDir)
+		storageBasePath := expandEnvVars(req.StorageBasePath)
+		if err := validateUserDataDir(userDataDir, storageBasePath); err != nil {
 			return errorResponse("PATH_NOT_WHITELISTED", err.Error())
 		}
 		edgeExe, err := discoverEdge(edgeCandidates, exists)
 		if err != nil {
 			return errorResponse("EDGE_NOT_FOUND", err.Error())
 		}
-		if err := os.MkdirAll(normalizePath(req.UserDataDir), 0o755); err != nil {
+		if err := os.MkdirAll(normalizePath(userDataDir), 0o755); err != nil {
 			return errorResponse("LAUNCH_FAILED", "create user-data-dir: "+err.Error())
 		}
-		args := buildEdgeArgs(req.UserDataDir, req.URL)
+		args := buildEdgeArgs(userDataDir, req.URL)
 		if err := launch(edgeExe, args); err != nil {
 			return errorResponse("LAUNCH_FAILED", err.Error())
 		}

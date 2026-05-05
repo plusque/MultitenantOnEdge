@@ -1,6 +1,36 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
+
+func TestExpandEnvVars_ReplacesKnownVars(t *testing.T) {
+	os.Setenv("TS_TEST_BASE", `C:\Users\test\AppData\Local`)
+	defer os.Unsetenv("TS_TEST_BASE")
+	got := expandEnvVars(`%TS_TEST_BASE%\TenantSwitcher\profiles`)
+	want := `C:\Users\test\AppData\Local\TenantSwitcher\profiles`
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestExpandEnvVars_LeavesUnknownVars(t *testing.T) {
+	os.Unsetenv("TS_DEFINITELY_NOT_SET")
+	got := expandEnvVars(`%TS_DEFINITELY_NOT_SET%\foo`)
+	want := `%TS_DEFINITELY_NOT_SET%\foo`
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestExpandEnvVars_NoVars(t *testing.T) {
+	got := expandEnvVars(`C:\plain\path\no\vars`)
+	want := `C:\plain\path\no\vars`
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
 
 func TestValidateUserDataDir_HappyPath(t *testing.T) {
 	err := validateUserDataDir(`C:\Users\you\AppData\Local\TenantSwitcher\profiles\mueller-ag`,
