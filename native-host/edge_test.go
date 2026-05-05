@@ -11,6 +11,7 @@ func TestBuildEdgeArgs_BasicLaunch(t *testing.T) {
 		`--user-data-dir=C:\tenants\mueller`,
 		`--no-first-run`,
 		`--no-default-browser-check`,
+		`--disable-features=msSingleSignOn,msAccountManager,AzureADSSOForChromium`,
 		`https://portal.azure.com`,
 	}
 	if len(args) != len(want) {
@@ -20,6 +21,22 @@ func TestBuildEdgeArgs_BasicLaunch(t *testing.T) {
 		if args[i] != want[i] {
 			t.Errorf("args[%d] = %q, want %q", i, args[i], want[i])
 		}
+	}
+}
+
+func TestBuildEdgeArgs_DisablesWindowsBrokerSSO(t *testing.T) {
+	// Regression: Phase 1 smoke test caught Edge silently using the Windows
+	// user's PRT via WAM on AAD-joined devices, breaking tenant isolation.
+	args := buildEdgeArgs(`C:\tenants\mueller`, ``)
+	found := false
+	for _, a := range args {
+		if a == `--disable-features=msSingleSignOn,msAccountManager,AzureADSSOForChromium` {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected SSO-disable flag in args, got %v", args)
 	}
 }
 
