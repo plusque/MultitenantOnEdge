@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tenant Switcher</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Tenant</h1>
+      <a href="#" id="open-options" title="Einstellungen">⚙</a>
+    </header>
+
+    <section id="recent-section" hidden>
+      <h2>Zuletzt verwendet</h2>
+      <ul id="recent-list"></ul>
+    </section>
+
+    <section id="all-section">
+      <h2>Alle Kunden</h2>
+      <ul id="all-list"></ul>
+    </section>
+
+    <p id="empty-state" hidden>
+      Noch keine Tenants angelegt.
+      <a href="#" id="open-options-empty">Jetzt einrichten →</a>
+    </p>
+
+    <p id="error-banner" class="error" hidden></p>
+
+    <script type="module" src="popup.ts"></script>
+  </body>
+</html>
