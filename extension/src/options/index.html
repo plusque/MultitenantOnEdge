@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tenant Switcher — Einstellungen</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Tenant Switcher</h1>
+
+      <section>
+        <h2>Einstellungen</h2>
+        <form id="settings-form">
+          <label>
+            Speicherort der Tenant-Profile
+            <input type="text" id="storage-base-path" required />
+            <small>Default: <code>%LOCALAPPDATA%\TenantSwitcher\profiles</code></small>
+          </label>
+          <label>
+            Edge-Pfad
+            <input type="text" id="edge-executable-path" required />
+            <small><code>auto</code> oder voller Pfad zu <code>msedge.exe</code></small>
+          </label>
+          <button type="submit">Speichern</button>
+          <span id="settings-status" class="status"></span>
+        </form>
+      </section>
+
+      <section>
+        <h2>Tenants</h2>
+        <button id="add-tenant-btn" class="primary">+ Neuer Tenant</button>
+
+        <table id="tenants-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Tenant-ID</th>
+              <th>Profil-Ordner</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tenants-body"></tbody>
+        </table>
+        <p id="tenants-empty" hidden>Noch keine Tenants angelegt.</p>
+      </section>
+    </main>
+
+    <dialog id="tenant-dialog">
+      <form method="dialog" id="tenant-form">
+        <h3 id="tenant-dialog-title">Neuer Tenant</h3>
+        <label>
+          Name *
+          <input type="text" id="t-name" required />
+        </label>
+        <label>
+          Farbe
+          <input type="color" id="t-color" value="#5B4DE0" />
+        </label>
+        <label>
+          Tenant-ID (optional)
+          <input type="text" id="t-tenant-id" pattern="[0-9a-fA-F-]{36}" />
+        </label>
+        <label>
+          Start-URL
+          <input type="url" id="t-default-url" value="https://portal.azure.com" required />
+        </label>
+        <label>
+          Notizen
+          <textarea id="t-notes" rows="2"></textarea>
+        </label>
+        <menu>
+          <button type="button" id="t-cancel">Abbrechen</button>
+          <button type="submit" class="primary">Speichern</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script type="module" src="options.ts"></script>
+  </body>
+</html>
